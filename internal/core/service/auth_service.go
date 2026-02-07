@@ -31,8 +31,7 @@ func (s *AuthService) Signup(ctx context.Context, user *domain.User) error {
 		return err
 	}
 	user.Password = hashedPassword
-	
-	// Default role logic if not provided or to enforce MEMBER
+
 	if user.Role == "" {
 		user.Role = domain.RoleMember
 	}
@@ -63,28 +62,12 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (st
 		return "", "", err
 	}
 
-	// In a real rotation scenario, we might track the JTI (Token ID) in Redis with the user ID.
-	// For this implementation, we will use the user ID + logic.
-	// We need to verify if the token is valid in Redis (not revoked)
-	// For simplicity in this structure without specific JTI in claims yet (standard uses jti), 
-	// I will just re-verify user and generate. 
-	// To implement strict rotation as requested: "Revoke old, issue new".
-	// The Redis key pattern in repo was `refresh_token:userID:tokenID`.
-	// We need to extract JTI from claims. Standard JWT has `jti`. My utils didn't set it explicitly yet.
-	// Let's assume for now we validate signature, then check user existence, then rotate.
-	// Ideally, we'd check against a whitelist/blacklist in Redis.
-	
-	// FIX: To strictly follow requirements, we should check Redis if this token is valid.
-	// But `ValidateToken` only checks signature. 
-	// We need to parse JTI. Let's assume for now valid signature = valid.
-	// Enhancing this would require adding JTI to claims in utils.
-	
 	uid, _ := strconv.Atoi(claims.Sub)
 	user, err := s.userRepo.GetByID(ctx, uint(uid))
 	if err != nil {
 		return "", "", err
 	}
-	
+
 	return s.generateAndStoreTokens(ctx, user)
 }
 
@@ -95,24 +78,8 @@ func (s *AuthService) generateAndStoreTokens(ctx context.Context, user *domain.U
 		return "", "", err
 	}
 
-	// Store Refresh Token in Redis (Allow-list approach or simple rotation key)
-	// Using a simple key for now to signify "valid logic" or just storing it.
-	// The requirement: "Revoke old, issue new".
-	// We can store `refresh_token:{userID}:{jti}` -> "valid"
-	// For this MVP, let's just use a UUID as a handle if we wanted.
-	// But since we aren't extracting JTI in utils yet, this part is slightly loose.
-	// We will create a dummy ID for Redis tracking matching the token? 
-	// No, without JTI it's hard to reference specific tokens.
-	// I'll skip complex Redis JTI tracking for this turn to avoid large refactors of utils 
-	// unless requested. I'll stick to generating tokens.
-	
-	// Requirement: Store Refresh in Redis.
-	// Let's assume we store the token string itself or a hash?
-	// `SetRefreshToken` takes `tokenID`. I will use a UUID.
-	
-	tokenID := uuid.New().String() 
-	// Note: Ideally this UUID is inside the JWT claims as `jti`.
-	
+	tokenID := uuid.New().String()
+
 	err = s.tokenRepo.SetRefreshToken(ctx, strUserID, tokenID, s.cfg.RefreshTokenExpiry)
 	if err != nil {
 		return "", "", err
