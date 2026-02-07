@@ -14,7 +14,6 @@ type TokenClaims struct {
 }
 
 func GenerateTokens(userID string, role string, cfg *config.Config) (string, string, error) {
-	// Access Token
 	accessClaims := TokenClaims{
 		Sub:  userID,
 		Role: role,
@@ -29,7 +28,6 @@ func GenerateTokens(userID string, role string, cfg *config.Config) (string, str
 		return "", "", err
 	}
 
-	// Refresh Token
 	refreshClaims := TokenClaims{
 		Sub:  userID,
 		Role: role,

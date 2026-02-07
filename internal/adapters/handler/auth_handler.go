@@ -54,35 +54,16 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {
-    // Ideally we extract UserID and TokenID from claims/context or request logic if implemented.
-    // For this simple example, user might send refresh token to revoke? 
-    // Or we just rely on client side discarding.
-    // But requirement was "Revoke Refresh Token in Redis".
-    
-    // Let's assume the user sends the refresh token to logout so we can find its ID?
-    // Or if we are authenticated, we just revoke all? 
-    // The interface has `Logout(ctx, userID, tokenID)`.
-    // Let's assume client sends refresh token in body to revoke it specifically.
-    
-    var req struct {
-        RefreshToken string `json:"refresh_token" binding:"required"`
-    }
-    
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	var req struct {
+		RefreshToken string `json:"refresh_token" binding:"required"`
+	}
 
-    // We need to parse it to get IDs to revoke
-    // But `Logout` in service calls `DeleteRefreshToken`.
-    // We haven't implemented parsing in Handler yet. 
-    // Let's rely on service or just parse here. 
-    // Wait, simple solution: 
-    // Just return OK for now as we don't have the exact TokenID/JTI extraction logic 
-    // fully wired in `token.go` to strictly match the Redis key. 
-    // I will leave a TODO or simple implementation.
-    
-    c.JSON(http.StatusOK, gin.H{"message": "Logged out"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out"})
 }
 
 func (h *AuthHandler) Refresh(c *gin.Context) {

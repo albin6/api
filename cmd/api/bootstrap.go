@@ -29,29 +29,23 @@ type Server struct {
 }
 
 func NewServer(cfg *config.Config) *Server {
-	// 1. Init Infra
 	log := logger.InitLogger(cfg.Environment)
 	db := database.NewPostgresDB(cfg)
 	rdb := database.NewRedisClient(cfg)
 
-	// Auto Migrate
 	db.AutoMigrate(&domain.User{}, &domain.Admin{})
 
-	// 2. Init Repositories
 	userRepo := repo.NewPostgresUserRepo(db)
 	adminRepo := repo.NewPostgresAdminRepo(db)
 	tokenRepo := storage.NewRedisTokenRepo(rdb)
 
-	// 3. Init Services
 	authService := service.NewAuthService(userRepo, tokenRepo, cfg)
 	adminService := service.NewAdminService(adminRepo)
 
-	// 4. Init Handlers
 	authHandler := handler.NewAuthHandler(authService)
 	adminHandler := handler.NewAdminHandler(adminService)
 	healthHandler := handler.NewHealthHandler(db, rdb)
 
-	// 5. Setup Router
 	if cfg.Environment == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -60,7 +54,6 @@ func NewServer(cfg *config.Config) *Server {
 
 	r.GET("/health", healthHandler.HealthCheck)
 
-	// Auth Routes
 	authGroup := r.Group("/auth")
 	{
 		authGroup.POST("/signup", authHandler.Signup)
@@ -69,14 +62,12 @@ func NewServer(cfg *config.Config) *Server {
 		authGroup.POST("/logout", authHandler.Logout)
 	}
 
-	// Admin Routes
 	adminGroup := r.Group("/admin")
 	adminGroup.Use(middleware.AdminKeyMiddleware(cfg))
 	{
 		adminGroup.POST("/create", adminHandler.CreateAdmin)
 	}
 
-	// Protected Routes (Example)
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware(cfg))
 	{
