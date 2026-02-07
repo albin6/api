@@ -1,20 +1,19 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/albin6/api/pkg/database"
+	"github.com/albin6/api/config"
+	"log"
 )
 
 func main() {
-	database.NewPostgresDB()
+	// 1. Load Config
+	cfg := config.LoadConfig()
 
-	r := gin.Default()
+	// 2. Initialize Server (DI Wiring)
+	server := NewServer(cfg)
 
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status": "ok",
-		})
-	})
-
-	r.Run(":8080")
+	// 3. Run Server
+	if err := server.Run(); err != nil {
+		log.Fatal(err)
+	}
 }
