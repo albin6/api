@@ -59,7 +59,6 @@ func NewServer(cfg *config.Config) *Server {
 
 	r.GET("/health", healthHandler.HealthCheck)
 
-	r.GET("/students", studentHandler.GetStudents)
 
 	authGroup := r.Group("/auth")
 	{
@@ -79,6 +78,7 @@ func NewServer(cfg *config.Config) *Server {
 	protected.Use(middleware.AuthMiddleware(cfg))
 	{
 		protected.POST("/students", studentHandler.CreateStudent)
+		protected.GET("/students", studentHandler.GetStudents)
 		protected.GET("/profile", func(c *gin.Context) {
 			userID, _ := c.Get("userID")
 			role, _ := c.Get("role")

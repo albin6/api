@@ -269,13 +269,14 @@ Returns the profile information of the authenticated user. Proves that the Acces
 ## 8. Get Students
 
 ### Endpoint Path
-`GET /students`
+`GET /api/students`
 
 ### Description
-Retrieves a list of students with advanced search, filtering, sorting, and pagination.
+Retrieves a list of students with advanced search, filtering, sorting, and pagination. Requires authentication.
 
 ### Request Structure
-- **Headers**: None (or Authorization if protected)
+- **Headers**: 
+  - `Authorization`: `Bearer <access_token>`
 - **URL Parameters**:
   - `search` (optional): Global search term for full_name, email, and phone.
   - `program_status` (optional): Filter by status (true/false).
@@ -284,7 +285,7 @@ Retrieves a list of students with advanced search, filtering, sorting, and pagin
   - `page` (optional): Page number (min 1). Default: `1`.
   - `limit` (optional): Items per page (max 100). Default: `10`.
 
-- **Example**: `/students?search=albin&program_status=true&sort_by=full_name&order=asc&page=2&limit=5`
+- **Example**: `/api/students?search=albin&program_status=true&sort_by=full_name&order=asc&page=2&limit=5`
 
 ### Success Response
 - **Status Code**: `200 OK`
@@ -313,6 +314,7 @@ Retrieves a list of students with advanced search, filtering, sorting, and pagin
 
 ### Failure Responses
 - **Status Code**: `400 Bad Request` (Invalid parameters)
+- **Status Code**: `401 Unauthorized` (Missing or invalid token)
 - **Status Code**: `500 Internal Server Error` (Database error)
 - **Status Code**: `429 Too Many Requests` (Rate limit exceeded)
 
