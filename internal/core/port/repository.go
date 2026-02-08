@@ -23,3 +23,8 @@ type TokenRepository interface {
 	DeleteRefreshToken(ctx context.Context, userID string, tokenID string) error
 	ValidateRefreshToken(ctx context.Context, userID string, tokenID string) (bool, error)
 }
+
+type StudentRepository interface {
+	GetAll(ctx context.Context, search string, status *bool, sortBy string, order string, page int, limit int) ([]domain.Student, int64, error)
+	Create(ctx context.Context, student *domain.Student) error
+}

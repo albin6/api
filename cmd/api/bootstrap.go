@@ -33,26 +33,33 @@ func NewServer(cfg *config.Config) *Server {
 	db := database.NewPostgresDB(cfg)
 	rdb := database.NewRedisClient(cfg)
 
-	db.AutoMigrate(&domain.User{}, &domain.Admin{})
-
 	userRepo := repo.NewPostgresUserRepo(db)
 	adminRepo := repo.NewPostgresAdminRepo(db)
+	studentRepo := repo.NewPostgresStudentRepo(db)
 	tokenRepo := storage.NewRedisTokenRepo(rdb)
 
 	authService := service.NewAuthService(userRepo, tokenRepo, cfg)
 	adminService := service.NewAdminService(adminRepo)
+	studentService := service.NewStudentService(studentRepo)
 
 	authHandler := handler.NewAuthHandler(authService)
 	adminHandler := handler.NewAdminHandler(adminService)
+	studentHandler := handler.NewStudentHandler(studentService)
 	healthHandler := handler.NewHealthHandler(db, rdb)
+
+	db.AutoMigrate(&domain.User{}, &domain.Admin{}, &domain.Student{})
 
 	if cfg.Environment == "prod" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(middleware.CORSMiddleware())
+	r.Use(middleware.RateLimitMiddleware(rdb))
 
 	r.GET("/health", healthHandler.HealthCheck)
+
+	r.GET("/students", studentHandler.GetStudents)
 
 	authGroup := r.Group("/auth")
 	{
@@ -71,6 +78,7 @@ func NewServer(cfg *config.Config) *Server {
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware(cfg))
 	{
+		protected.POST("/students", studentHandler.CreateStudent)
 		protected.GET("/profile", func(c *gin.Context) {
 			userID, _ := c.Get("userID")
 			role, _ := c.Get("role")

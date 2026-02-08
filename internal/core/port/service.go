@@ -15,3 +15,8 @@ type AuthService interface {
 type AdminService interface {
 	CreateAdmin(ctx context.Context, admin *domain.Admin) error
 }
+
+type StudentService interface {
+	GetStudents(ctx context.Context, search string, status *bool, sortBy string, order string, page int, limit int) (map[string]interface{}, error)
+	CreateStudent(ctx context.Context, student *domain.Student) error
+}

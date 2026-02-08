@@ -18,7 +18,7 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/main .
-COPY --from=builder /app/configs ./configs 
+COPY --from=builder /app/config ./config 
 
 EXPOSE 8080
 
