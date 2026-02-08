@@ -263,3 +263,105 @@ Returns the profile information of the authenticated user. Proves that the Acces
   "error": "Authorization header required"
 }
 ```
+
+---
+
+## 8. Get Students
+
+### Endpoint Path
+`GET /students`
+
+### Description
+Retrieves a list of students with advanced search, filtering, sorting, and pagination.
+
+### Request Structure
+- **Headers**: None (or Authorization if protected)
+- **URL Parameters**:
+  - `search` (optional): Global search term for full_name, email, and phone.
+  - `program_status` (optional): Filter by status (true/false).
+  - `sort_by` (optional): Field to sort by (`full_name`, `email`, `created_at`). Default: `created_at`.
+  - `order` (optional): Sort order (`asc`, `desc`). Default: `desc`.
+  - `page` (optional): Page number (min 1). Default: `1`.
+  - `limit` (optional): Items per page (max 100). Default: `10`.
+
+- **Example**: `/students?search=albin&program_status=true&sort_by=full_name&order=asc&page=2&limit=5`
+
+### Success Response
+- **Status Code**: `200 OK`
+- **Body**:
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "full_name": "Albin Aji",
+      "phone": "9876543210",
+      "email": "albin@example.com",
+      "program_status": true,
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    }
+  ],
+  "pagination": {
+    "total": 21,
+    "page": 2,
+    "limit": 5,
+    "total_pages": 5
+  }
+}
+```
+
+### Failure Responses
+- **Status Code**: `400 Bad Request` (Invalid parameters)
+- **Status Code**: `500 Internal Server Error` (Database error)
+- **Status Code**: `429 Too Many Requests` (Rate limit exceeded)
+
+---
+
+## 9. Create Student
+
+### Endpoint Path
+`POST /api/students`
+
+### Description
+Creates a new student record. Requires authentication.
+
+### Request Structure
+- **Headers**: 
+  - `Content-Type: application/json`
+  - `Authorization`: `Bearer <access_token>`
+- **Body**:
+```json
+{
+  "full_name": "string (required)",
+  "email": "string (required, unique)",
+  "phone": "string (required, min 10 chars)",
+  "program_status": "boolean (optional, default false)"
+}
+```
+
+### Success Response
+- **Status Code**: `201 Created`
+- **Body**:
+```json
+{
+  "id": 1,
+  "full_name": "New Student",
+  "email": "new.student@test.com",
+  "phone": "1234567890",
+  "program_status": true,
+  "created_at": "2023-01-01T00:00:00Z",
+  "updated_at": "2023-01-01T00:00:00Z"
+}
+```
+
+### Failure Responses
+- **Status Code**: `400 Bad Request` (Missing fields, invalid email/phone, duplicate email)
+- **Example Error**:
+```json
+{
+  "error": "full_name, email, and phone are required"
+}
+```
+- **Status Code**: `401 Unauthorized`
+- **Status Code**: `500 Internal Server Error`
