@@ -2,6 +2,13 @@ package main
 
 import (
 	"context"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/albin6/api/config"
 	"github.com/albin6/api/internal/adapters/api/middleware"
 	"github.com/albin6/api/internal/adapters/handler"
@@ -11,21 +18,17 @@ import (
 	"github.com/albin6/api/internal/core/service"
 	"github.com/albin6/api/pkg/database"
 	"github.com/albin6/api/pkg/logger"
+	"github.com/albin6/api/pkg/scheduler"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"log/slog"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 type Server struct {
-	Router *gin.Engine
-	DB     *gorm.DB
-	Config *config.Config
-	Logger *slog.Logger
+	Router    *gin.Engine
+	DB        *gorm.DB
+	Config    *config.Config
+	Logger    *slog.Logger
+	Scheduler *scheduler.Scheduler
 }
 
 func NewServer(cfg *config.Config) *Server {
@@ -37,17 +40,36 @@ func NewServer(cfg *config.Config) *Server {
 	adminRepo := repo.NewPostgresAdminRepo(db)
 	studentRepo := repo.NewPostgresStudentRepo(db)
 	tokenRepo := storage.NewRedisTokenRepo(rdb)
+	followUpRepo := repo.NewPostgresFollowUpRepo(db)
+	contactLogRepo := repo.NewPostgresContactLogRepo(db)
+	meetingRepo := repo.NewPostgresMeetingRepo(db)
+	meetingOutcomeRepo := repo.NewPostgresMeetingOutcomeRepo(db)
+	reminderRepo := repo.NewPostgresReminderRepo(db)
 
 	authService := service.NewAuthService(userRepo, tokenRepo, cfg)
 	adminService := service.NewAdminService(adminRepo)
 	studentService := service.NewStudentService(studentRepo)
+	followUpService := service.NewFollowUpService(followUpRepo, contactLogRepo, meetingRepo, meetingOutcomeRepo, reminderRepo, studentRepo, userRepo)
+	reminderService := service.NewReminderService(reminderRepo)
 
 	authHandler := handler.NewAuthHandler(authService)
 	adminHandler := handler.NewAdminHandler(adminService)
 	studentHandler := handler.NewStudentHandler(studentService)
 	healthHandler := handler.NewHealthHandler(db, rdb)
+	followUpHandler := handler.NewFollowUpHandler(followUpService)
+	reminderHandler := handler.NewReminderHandler(reminderService)
 
-	db.AutoMigrate(&domain.User{}, &domain.Admin{}, &domain.Student{})
+	db.AutoMigrate(
+		&domain.User{},
+		&domain.Admin{},
+		&domain.Student{},
+		&domain.StudentFollowUp{},
+		&domain.ContactLog{},
+		&domain.Meeting{},
+		&domain.MeetingParticipant{},
+		&domain.MeetingOutcome{},
+		&domain.FollowUpReminder{},
+	)
 
 	if cfg.Environment == "prod" {
 		gin.SetMode(gin.ReleaseMode)
@@ -58,7 +80,6 @@ func NewServer(cfg *config.Config) *Server {
 	r.Use(middleware.RateLimitMiddleware(rdb))
 
 	r.GET("/health", healthHandler.HealthCheck)
-
 
 	authGroup := r.Group("/auth")
 	{
@@ -77,8 +98,29 @@ func NewServer(cfg *config.Config) *Server {
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware(cfg))
 	{
+		// Student endpoints
 		protected.POST("/students", studentHandler.CreateStudent)
 		protected.GET("/students", studentHandler.GetStudents)
+
+		// Follow-up endpoints
+		protected.POST("/followups", followUpHandler.CreateFollowUp)
+		protected.GET("/followups/:id", followUpHandler.GetFollowUp)
+		protected.GET("/followups", followUpHandler.ListFollowUps)
+		protected.POST("/followups/:id/restart", followUpHandler.RestartFollowUp)
+
+		// Contact log endpoints
+		protected.POST("/followups/:id/contacts", followUpHandler.AddContactLog)
+		protected.GET("/followups/:id/contacts", followUpHandler.GetContactLogs)
+
+		// Meeting endpoints
+		protected.POST("/followups/:id/meetings", followUpHandler.ScheduleMeeting)
+		protected.GET("/followups/:id/meetings", followUpHandler.ListMeetings)
+		protected.PATCH("/meetings/:id/complete", followUpHandler.CompleteMeeting)
+		protected.POST("/meetings/:id/outcome", followUpHandler.SubmitOutcome)
+
+		// Reminder endpoints
+		protected.GET("/reminders/upcoming", reminderHandler.GetUpcomingReminders)
+
 		protected.GET("/profile", func(c *gin.Context) {
 			userID, _ := c.Get("userID")
 			role, _ := c.Get("role")
@@ -86,11 +128,16 @@ func NewServer(cfg *config.Config) *Server {
 		})
 	}
 
+	// Initialize and start scheduler
+	sched := scheduler.NewScheduler(reminderService, log)
+	sched.Start()
+
 	return &Server{
-		Router: r,
-		DB:     db,
-		Config: cfg,
-		Logger: log,
+		Router:    r,
+		DB:        db,
+		Config:    cfg,
+		Logger:    log,
+		Scheduler: sched,
 	}
 }
 
@@ -111,6 +158,9 @@ func (s *Server) Run() error {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	s.Logger.Info("Shutting down server...")
+
+	// Stop scheduler
+	s.Scheduler.Stop()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
