@@ -63,3 +63,10 @@ func (s *StudentService) CreateStudent(ctx context.Context, student *domain.Stud
 
 	return s.repo.Create(ctx, student)
 }
+
+func (s *StudentService) SearchStudents(ctx context.Context, query string, limit int) ([]domain.Student, error) {
+	if query == "" {
+		return []domain.Student{}, nil
+	}
+	return s.repo.Search(ctx, query, limit)
+}

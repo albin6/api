@@ -11,6 +11,7 @@ type AuthService interface {
 	Login(ctx context.Context, email, password string) (string, string, error)
 	Logout(ctx context.Context, userID string, tokenID string) error
 	RefreshToken(ctx context.Context, refreshToken string) (string, string, error)
+	SearchUsers(ctx context.Context, query string, limit int) ([]domain.User, error)
 }
 
 type AdminService interface {
@@ -20,6 +21,7 @@ type AdminService interface {
 type StudentService interface {
 	GetStudents(ctx context.Context, search string, status *bool, sortBy string, order string, page int, limit int) (map[string]interface{}, error)
 	CreateStudent(ctx context.Context, student *domain.Student) error
+	SearchStudents(ctx context.Context, query string, limit int) ([]domain.Student, error)
 }
 
 type FollowUpService interface {

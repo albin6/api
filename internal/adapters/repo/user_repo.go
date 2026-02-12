@@ -35,3 +35,20 @@ func (r *PostgresUserRepo) GetByID(ctx context.Context, id uint) (*domain.User, 
 	}
 	return &user, nil
 }
+
+func (r *PostgresUserRepo) Search(ctx context.Context, query string, limit int) ([]domain.User, error) {
+	var users []domain.User
+	
+	if limit <= 0 || limit > 20 {
+		limit = 10
+	}
+	
+	searchTerm := "%" + query + "%"
+	err := r.db.WithContext(ctx).
+		Where("name ILIKE ? OR email ILIKE ?", searchTerm, searchTerm).
+		Order("name ASC").
+		Limit(limit).
+		Find(&users).Error
+	
+	return users, err
+}

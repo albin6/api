@@ -5,6 +5,7 @@ import (
 	"github.com/albin6/api/internal/core/port"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
 
 type AuthHandler struct {
@@ -86,4 +87,27 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 	})
+}
+
+func (h *AuthHandler) SearchUsers(c *gin.Context) {
+	query := c.Query("q")
+	limitStr := c.DefaultQuery("limit", "10")
+	
+	limit := 10
+	if l, err := strconv.Atoi(limitStr); err == nil {
+		limit = l
+	}
+	
+	users, err := h.authService.SearchUsers(c.Request.Context(), query, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	// Remove password from response
+	for i := range users {
+		users[i].Password = ""
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"users": users})
 }

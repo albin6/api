@@ -101,6 +101,7 @@ func NewServer(cfg *config.Config) *Server {
 		// Student endpoints
 		protected.POST("/students", studentHandler.CreateStudent)
 		protected.GET("/students", studentHandler.GetStudents)
+		protected.GET("/students/search", studentHandler.SearchStudents)
 
 		// Follow-up endpoints
 		protected.POST("/followups", followUpHandler.CreateFollowUp)
@@ -120,6 +121,9 @@ func NewServer(cfg *config.Config) *Server {
 
 		// Reminder endpoints
 		protected.GET("/reminders/upcoming", reminderHandler.GetUpcomingReminders)
+
+		// Search endpoints
+		protected.GET("/users/search", authHandler.SearchUsers)
 
 		protected.GET("/profile", func(c *gin.Context) {
 			userID, _ := c.Get("userID")

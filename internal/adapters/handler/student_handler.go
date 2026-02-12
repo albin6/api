@@ -63,3 +63,18 @@ func (h *StudentHandler) CreateStudent(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, student)
 }
+
+func (h *StudentHandler) SearchStudents(c *gin.Context) {
+	query := c.Query("q")
+	limitStr := c.DefaultQuery("limit", "10")
+	
+	limit, _ := strconv.Atoi(limitStr)
+	
+	students, err := h.service.SearchStudents(c.Request.Context(), query, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"students": students})
+}
