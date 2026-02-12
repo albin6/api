@@ -55,3 +55,20 @@ func (r *PostgresStudentRepo) GetAll(ctx context.Context, search string, status 
 func (r *PostgresStudentRepo) Create(ctx context.Context, student *domain.Student) error {
 	return r.db.WithContext(ctx).Create(student).Error
 }
+
+func (r *PostgresStudentRepo) Search(ctx context.Context, query string, limit int) ([]domain.Student, error) {
+	var students []domain.Student
+	
+	if limit <= 0 || limit > 20 {
+		limit = 10
+	}
+	
+	searchTerm := "%" + query + "%"
+	err := r.db.WithContext(ctx).
+		Where("full_name ILIKE ? OR email ILIKE ? OR phone ILIKE ?", searchTerm, searchTerm, searchTerm).
+		Order("full_name ASC").
+		Limit(limit).
+		Find(&students).Error
+	
+	return students, err
+}

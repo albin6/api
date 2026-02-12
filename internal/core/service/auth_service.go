@@ -87,3 +87,10 @@ func (s *AuthService) generateAndStoreTokens(ctx context.Context, user *domain.U
 
 	return accessToken, refreshToken, nil
 }
+
+func (s *AuthService) SearchUsers(ctx context.Context, query string, limit int) ([]domain.User, error) {
+	if query == "" {
+		return []domain.User{}, nil
+	}
+	return s.userRepo.Search(ctx, query, limit)
+}

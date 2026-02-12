@@ -11,6 +11,7 @@ type UserRepository interface {
 	Create(ctx context.Context, user *domain.User) error
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
 	GetByID(ctx context.Context, id uint) (*domain.User, error)
+	Search(ctx context.Context, query string, limit int) ([]domain.User, error)
 }
 
 type AdminRepository interface {
@@ -28,6 +29,7 @@ type TokenRepository interface {
 type StudentRepository interface {
 	GetAll(ctx context.Context, search string, status *bool, sortBy string, order string, page int, limit int) ([]domain.Student, int64, error)
 	Create(ctx context.Context, student *domain.Student) error
+	Search(ctx context.Context, query string, limit int) ([]domain.Student, error)
 }
 
 type FollowUpRepository interface {
