@@ -33,7 +33,10 @@ func (h *FollowUpHandler) CreateFollowUp(c *gin.Context) {
 		return
 	}
 
-	followUp, err := h.service.CreateFollowUp(c.Request.Context(), req.StudentID, req.AssignedTo)
+	// Get creator user ID from auth context
+	createdBy := getUserIDFromContext(c)
+
+	followUp, err := h.service.CreateFollowUp(c.Request.Context(), req.StudentID, req.AssignedTo, createdBy)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,

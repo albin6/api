@@ -9,6 +9,7 @@ import (
 
 	"github.com/albin6/api/internal/core/domain"
 	"github.com/albin6/api/internal/core/port"
+	"github.com/google/uuid"
 )
 
 type FollowUpService struct {
@@ -19,6 +20,12 @@ type FollowUpService struct {
 	reminderRepo port.ReminderRepository
 	studentRepo  port.StudentRepository
 	userRepo     port.UserRepository
+	hub          WebSocketHub
+}
+
+// WebSocketHub interface for notification broadcasting
+type WebSocketHub interface {
+	BroadcastToUser(userID uint, notification *domain.Notification)
 }
 
 func NewFollowUpService(
@@ -29,6 +36,7 @@ func NewFollowUpService(
 	reminderRepo port.ReminderRepository,
 	studentRepo port.StudentRepository,
 	userRepo port.UserRepository,
+	hub WebSocketHub,
 ) *FollowUpService {
 	return &FollowUpService{
 		followUpRepo: followUpRepo,
@@ -38,10 +46,11 @@ func NewFollowUpService(
 		reminderRepo: reminderRepo,
 		studentRepo:  studentRepo,
 		userRepo:     userRepo,
+		hub:          hub,
 	}
 }
 
-func (s *FollowUpService) CreateFollowUp(ctx context.Context, studentID, assignedTo uint) (*domain.StudentFollowUp, error) {
+func (s *FollowUpService) CreateFollowUp(ctx context.Context, studentID, assignedTo, createdBy uint) (*domain.StudentFollowUp, error) {
 	// Verify assigned user exists and is MEMBER role
 	user, err := s.userRepo.GetByID(ctx, assignedTo)
 	if err != nil {
@@ -61,7 +70,23 @@ func (s *FollowUpService) CreateFollowUp(ctx context.Context, studentID, assigne
 		return nil, err
 	}
 
-	return s.followUpRepo.GetByID(ctx, followUp.ID)
+	// Get full follow-up with relations
+	result, err := s.followUpRepo.GetByID(ctx, followUp.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch creator user for notification
+	creator, err := s.userRepo.GetByID(ctx, createdBy)
+	if err != nil {
+		// If we can't fetch creator, use default message
+		creator = &domain.User{Name: "System"}
+	}
+
+	// Send notification to assigned user
+	go s.notifyFollowUpAssigned(ctx, result, creator)
+
+	return result, nil
 }
 
 func (s *FollowUpService) GetFollowUp(ctx context.Context, id, requestingUserID uint) (*domain.StudentFollowUp, error) {
@@ -360,4 +385,29 @@ func (s *FollowUpService) RestartFollowUp(ctx context.Context, followUpID, userI
 
 	// Reset stage to CONTACT_PENDING
 	return s.followUpRepo.UpdateStage(ctx, followUpID, domain.StageContactPending)
+}
+
+// notifyFollowUpAssigned sends a real-time notification to the assigned user
+func (s *FollowUpService) notifyFollowUpAssigned(ctx context.Context, followUp *domain.StudentFollowUp, creator *domain.User) {
+	if s.hub == nil {
+		return // Hub not initialized (e.g., in tests)
+	}
+
+	// Build notification
+	notification := &domain.Notification{
+		ID:      uuid.New().String(),
+		Type:    domain.NotificationFollowUpAssigned,
+		Title:   "New Follow-Up Assigned",
+		Message: fmt.Sprintf("You have been assigned to follow up with %s", followUp.Student.FullName),
+		Data: domain.FollowUpAssignedData{
+			FollowUpID:  followUp.ID,
+			StudentName: followUp.Student.FullName,
+			AssignedBy:  creator.Name,
+		},
+		CreatedAt: time.Now(),
+	}
+
+	// Broadcast to assigned user
+	fmt.Printf("[FollowUpService] Notification generated for user %d: %+v\n", followUp.AssignedTo, notification)
+	s.hub.BroadcastToUser(followUp.AssignedTo, notification)
 }

@@ -25,7 +25,7 @@ type StudentService interface {
 }
 
 type FollowUpService interface {
-	CreateFollowUp(ctx context.Context, studentID, assignedTo uint) (*domain.StudentFollowUp, error)
+	CreateFollowUp(ctx context.Context, studentID, assignedTo, createdBy uint) (*domain.StudentFollowUp, error)
 	GetFollowUp(ctx context.Context, id, requestingUserID uint) (*domain.StudentFollowUp, error)
 	ListFollowUps(ctx context.Context, stage *domain.FollowUpStage, assignedTo *uint, page, limit int) (map[string]interface{}, error)
 	AddContactLog(ctx context.Context, followUpID, userID uint, successful bool, notes string) error

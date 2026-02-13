@@ -14,6 +14,7 @@ import (
 	"github.com/albin6/api/internal/adapters/handler"
 	"github.com/albin6/api/internal/adapters/repo"
 	"github.com/albin6/api/internal/adapters/storage"
+	"github.com/albin6/api/internal/adapters/websocket"
 	"github.com/albin6/api/internal/core/domain"
 	"github.com/albin6/api/internal/core/service"
 	"github.com/albin6/api/pkg/database"
@@ -46,10 +47,14 @@ func NewServer(cfg *config.Config) *Server {
 	meetingOutcomeRepo := repo.NewPostgresMeetingOutcomeRepo(db)
 	reminderRepo := repo.NewPostgresReminderRepo(db)
 
+	// Initialize WebSocket hub
+	hub := websocket.NewHub()
+	go hub.Run()
+
 	authService := service.NewAuthService(userRepo, tokenRepo, cfg)
 	adminService := service.NewAdminService(adminRepo)
 	studentService := service.NewStudentService(studentRepo)
-	followUpService := service.NewFollowUpService(followUpRepo, contactLogRepo, meetingRepo, meetingOutcomeRepo, reminderRepo, studentRepo, userRepo)
+	followUpService := service.NewFollowUpService(followUpRepo, contactLogRepo, meetingRepo, meetingOutcomeRepo, reminderRepo, studentRepo, userRepo, hub)
 	reminderService := service.NewReminderService(reminderRepo)
 
 	authHandler := handler.NewAuthHandler(authService)
@@ -80,6 +85,9 @@ func NewServer(cfg *config.Config) *Server {
 	r.Use(middleware.RateLimitMiddleware(rdb))
 
 	r.GET("/health", healthHandler.HealthCheck)
+
+	// WebSocket endpoint (JWT token in query param: /ws?token=xxx)
+	r.GET("/ws", websocket.ServeWs(hub, cfg))
 
 	authGroup := r.Group("/auth")
 	{
