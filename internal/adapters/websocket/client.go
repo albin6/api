@@ -10,33 +10,33 @@ import (
 )
 
 const (
-	// Time allowed to write a message to the peer
+	
 	writeWait = 10 * time.Second
 
-	// Time allowed to read the next pong message from the peer
+	
 	pongWait = 60 * time.Second
 
-	// Send pings to peer with this period (must be less than pongWait)
+	
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer
+	
 	maxMessageSize = 512
 )
 
 type Client struct {
 	hub *Hub
 
-	// WebSocket connection
+	
 	conn *websocket.Conn
 
-	// User ID associated with this connection
+	
 	userID uint
 
-	// Buffered channel of outbound messages
+	
 	send chan *domain.Notification
 }
 
-// readPump pumps messages from the WebSocket connection to the hub
+
 func (c *Client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
@@ -58,12 +58,12 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		// Currently, we don't process incoming messages from clients
-		// This is a one-way notification system (server -> client)
+		
+		
 	}
 }
 
-// writePump pumps messages from the hub to the WebSocket connection
+
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
@@ -76,12 +76,12 @@ func (c *Client) writePump() {
 		case notification, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if !ok {
-				// The hub closed the channel
+				
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
 
-			// Send notification as JSON
+			
 			data, err := json.Marshal(notification)
 			if err != nil {
 				log.Printf("error marshaling notification: %v", err)

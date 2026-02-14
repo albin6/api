@@ -47,7 +47,7 @@ func NewServer(cfg *config.Config) *Server {
 	meetingOutcomeRepo := repo.NewPostgresMeetingOutcomeRepo(db)
 	reminderRepo := repo.NewPostgresReminderRepo(db)
 
-	// Initialize WebSocket hub
+	
 	hub := websocket.NewHub()
 	go hub.Run()
 
@@ -86,7 +86,7 @@ func NewServer(cfg *config.Config) *Server {
 
 	r.GET("/health", healthHandler.HealthCheck)
 
-	// WebSocket endpoint (JWT token in query param: /ws?token=xxx)
+	
 	r.GET("/ws", websocket.ServeWs(hub, cfg))
 
 	authGroup := r.Group("/auth")
@@ -106,31 +106,31 @@ func NewServer(cfg *config.Config) *Server {
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware(cfg))
 	{
-		// Student endpoints
+		
 		protected.POST("/students", studentHandler.CreateStudent)
 		protected.GET("/students", studentHandler.GetStudents)
 		protected.GET("/students/search", studentHandler.SearchStudents)
 
-		// Follow-up endpoints
+		
 		protected.POST("/followups", followUpHandler.CreateFollowUp)
 		protected.GET("/followups/:id", followUpHandler.GetFollowUp)
 		protected.GET("/followups", followUpHandler.ListFollowUps)
 		protected.POST("/followups/:id/restart", followUpHandler.RestartFollowUp)
 
-		// Contact log endpoints
+		
 		protected.POST("/followups/:id/contacts", followUpHandler.AddContactLog)
 		protected.GET("/followups/:id/contacts", followUpHandler.GetContactLogs)
 
-		// Meeting endpoints
+		
 		protected.POST("/followups/:id/meetings", followUpHandler.ScheduleMeeting)
 		protected.GET("/followups/:id/meetings", followUpHandler.ListMeetings)
 		protected.PATCH("/meetings/:id/complete", followUpHandler.CompleteMeeting)
 		protected.POST("/meetings/:id/outcome", followUpHandler.SubmitOutcome)
 
-		// Reminder endpoints
+		
 		protected.GET("/reminders/upcoming", reminderHandler.GetUpcomingReminders)
 
-		// Search endpoints
+		
 		protected.GET("/users/search", authHandler.SearchUsers)
 
 		protected.GET("/profile", func(c *gin.Context) {
@@ -140,7 +140,7 @@ func NewServer(cfg *config.Config) *Server {
 		})
 	}
 
-	// Initialize and start scheduler
+	
 	sched := scheduler.NewScheduler(reminderService, log)
 	sched.Start()
 
@@ -171,7 +171,7 @@ func (s *Server) Run() error {
 	<-quit
 	s.Logger.Info("Shutting down server...")
 
-	// Stop scheduler
+	
 	s.Scheduler.Stop()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

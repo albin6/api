@@ -15,7 +15,7 @@ func NewReminderHandler(service port.ReminderService) *ReminderHandler {
 	return &ReminderHandler{service: service}
 }
 
-// GetUpcomingReminders handles GET /reminders/upcoming
+
 func (h *ReminderHandler) GetUpcomingReminders(c *gin.Context) {
 	userID := getUserIDFromContext(c)
 

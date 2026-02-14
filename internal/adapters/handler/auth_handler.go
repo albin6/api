@@ -104,7 +104,7 @@ func (h *AuthHandler) SearchUsers(c *gin.Context) {
 		return
 	}
 	
-	// Remove password from response
+	
 	for i := range users {
 		users[i].Password = ""
 	}

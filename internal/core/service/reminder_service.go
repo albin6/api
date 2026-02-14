@@ -30,11 +30,11 @@ func (s *ReminderService) ProcessPendingReminders(ctx context.Context) error {
 	}
 
 	for _, reminder := range reminders {
-		// TODO: Send notification to assigned user
-		// This will be implemented when notification service is ready
-		// For now, just mark as sent
+		
+		
+		
 		if err := s.reminderRepo.MarkAsSent(ctx, reminder.ID); err != nil {
-			// Log error but continue processing other reminders
+			
 			continue
 		}
 	}

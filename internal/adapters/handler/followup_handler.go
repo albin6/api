@@ -17,7 +17,7 @@ func NewFollowUpHandler(service port.FollowUpService) *FollowUpHandler {
 	return &FollowUpHandler{service: service}
 }
 
-// CreateFollowUp handles POST /followups
+
 func (h *FollowUpHandler) CreateFollowUp(c *gin.Context) {
 	var req struct {
 		StudentID  uint `json:"student_id" binding:"required"`
@@ -33,7 +33,7 @@ func (h *FollowUpHandler) CreateFollowUp(c *gin.Context) {
 		return
 	}
 
-	// Get creator user ID from auth context
+	
 	createdBy := getUserIDFromContext(c)
 
 	followUp, err := h.service.CreateFollowUp(c.Request.Context(), req.StudentID, req.AssignedTo, createdBy)
@@ -52,7 +52,7 @@ func (h *FollowUpHandler) CreateFollowUp(c *gin.Context) {
 	})
 }
 
-// GetFollowUp handles GET /followups/:id
+
 func (h *FollowUpHandler) GetFollowUp(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -80,7 +80,7 @@ func (h *FollowUpHandler) GetFollowUp(c *gin.Context) {
 	})
 }
 
-// ListFollowUps handles GET /followups
+
 func (h *FollowUpHandler) ListFollowUps(c *gin.Context) {
 	stageStr := c.Query("stage")
 	assignedToStr := c.Query("assigned_to")
@@ -124,7 +124,7 @@ func (h *FollowUpHandler) ListFollowUps(c *gin.Context) {
 	})
 }
 
-// AddContactLog handles POST /followups/:id/contacts
+
 func (h *FollowUpHandler) AddContactLog(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -177,7 +177,7 @@ func (h *FollowUpHandler) AddContactLog(c *gin.Context) {
 	})
 }
 
-// GetContactLogs handles GET /followups/:id/contacts
+
 func (h *FollowUpHandler) GetContactLogs(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -188,7 +188,7 @@ func (h *FollowUpHandler) GetContactLogs(c *gin.Context) {
 		return
 	}
 
-	// First verify user has access to this follow-up
+	
 	userID := getUserIDFromContext(c)
 	_, err = h.service.GetFollowUp(c.Request.Context(), uint(id), userID)
 	if err != nil {
@@ -199,8 +199,8 @@ func (h *FollowUpHandler) GetContactLogs(c *gin.Context) {
 		return
 	}
 
-	// TODO: Get contact logs from service
-	// For now, return empty array
+	
+	
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Contact logs retrieved successfully",
@@ -208,7 +208,7 @@ func (h *FollowUpHandler) GetContactLogs(c *gin.Context) {
 	})
 }
 
-// ScheduleMeeting handles POST /followups/:id/meetings
+
 func (h *FollowUpHandler) ScheduleMeeting(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -255,7 +255,7 @@ func (h *FollowUpHandler) ScheduleMeeting(c *gin.Context) {
 	})
 }
 
-// ListMeetings handles GET /followups/:id/meetings
+
 func (h *FollowUpHandler) ListMeetings(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -287,7 +287,7 @@ func (h *FollowUpHandler) ListMeetings(c *gin.Context) {
 	})
 }
 
-// CompleteMeeting handles PATCH /meetings/:id/complete
+
 func (h *FollowUpHandler) CompleteMeeting(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -318,7 +318,7 @@ func (h *FollowUpHandler) CompleteMeeting(c *gin.Context) {
 	})
 }
 
-// SubmitOutcome handles POST /meetings/:id/outcome
+
 func (h *FollowUpHandler) SubmitOutcome(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -374,7 +374,7 @@ func (h *FollowUpHandler) SubmitOutcome(c *gin.Context) {
 	})
 }
 
-// RestartFollowUp handles POST /followups/:id/restart
+
 func (h *FollowUpHandler) RestartFollowUp(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
@@ -405,14 +405,14 @@ func (h *FollowUpHandler) RestartFollowUp(c *gin.Context) {
 	})
 }
 
-// Helper function to extract user ID from context
+
 func getUserIDFromContext(c *gin.Context) uint {
 	userIDStr, exists := c.Get("userID")
 	if !exists {
 		return 0
 	}
 
-	// The middleware sets userID as string
+	
 	userIDString, ok := userIDStr.(string)
 	if !ok {
 		return 0

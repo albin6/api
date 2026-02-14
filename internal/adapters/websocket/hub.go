@@ -8,19 +8,19 @@ import (
 )
 
 type Hub struct {
-	// Registered clients mapped by user ID
+	
 	clients map[uint]*Client
 
-	// Inbound notifications to be broadcast
+	
 	broadcast chan *NotificationMessage
 
-	// Register requests from clients
+	
 	register chan *Client
 
-	// Unregister requests from clients
+	
 	unregister chan *Client
 
-	// Mutex for thread-safe access to clients map
+	
 	mu sync.RWMutex
 }
 
@@ -43,7 +43,7 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.mu.Lock()
-			// If user already has a connection, close the old one
+			
 			if existingClient, exists := h.clients[client.userID]; exists {
 				close(existingClient.send)
 			}
@@ -52,8 +52,8 @@ func (h *Hub) Run() {
 
 		case client := <-h.unregister:
 			h.mu.Lock()
-			// Only close and delete if this client is still the active one
-			// This prevents double-close if a new client registered in the meantime
+			
+			
 			if existingClient, exists := h.clients[client.userID]; exists && existingClient == client {
 				delete(h.clients, client.userID)
 				close(client.send)
@@ -70,7 +70,7 @@ func (h *Hub) Run() {
 					fmt.Printf("[Hub] Notification sent to client channel for user %d\n", message.UserID)
 				default:
 					fmt.Printf("[Hub] Client channel full for user %d, disconnecting\n", message.UserID)
-					// Client's send buffer is full, close connection
+					
 					h.mu.RUnlock()
 					h.unregister <- client
 					h.mu.RLock()
@@ -83,7 +83,7 @@ func (h *Hub) Run() {
 	}
 }
 
-// BroadcastToUser sends a notification to a specific user
+
 func (h *Hub) BroadcastToUser(userID uint, notification *domain.Notification) {
 	fmt.Printf("[Hub] Broadcasting to user %d\n", userID)
 	h.broadcast <- &NotificationMessage{
@@ -92,7 +92,7 @@ func (h *Hub) BroadcastToUser(userID uint, notification *domain.Notification) {
 	}
 }
 
-// GetConnectedUserCount returns the number of currently connected users
+
 func (h *Hub) GetConnectedUserCount() int {
 	h.mu.RLock()
 	defer h.mu.RUnlock()

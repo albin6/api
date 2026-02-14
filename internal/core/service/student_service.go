@@ -48,15 +48,15 @@ func (s *StudentService) GetStudents(ctx context.Context, search string, status 
 }
 
 func (s *StudentService) CreateStudent(ctx context.Context, student *domain.Student) error {
-	// 3. Validation
+	
 	if student.FullName == "" || student.Email == "" || student.Phone == "" {
 		return errors.New("full_name, email, and phone are required")
 	}
-	// Basic email validation
+	
 	if !strings.Contains(student.Email, "@") {
 		return errors.New("invalid email format")
 	}
-	// Basic phone validation (e.g. at least 10 digits)
+	
 	if len(student.Phone) < 10 {
 		return errors.New("phone must be at least 10 digits")
 	}

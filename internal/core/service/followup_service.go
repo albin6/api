@@ -23,7 +23,7 @@ type FollowUpService struct {
 	hub          WebSocketHub
 }
 
-// WebSocketHub interface for notification broadcasting
+
 type WebSocketHub interface {
 	BroadcastToUser(userID uint, notification *domain.Notification)
 }
@@ -51,7 +51,7 @@ func NewFollowUpService(
 }
 
 func (s *FollowUpService) CreateFollowUp(ctx context.Context, studentID, assignedTo, createdBy uint) (*domain.StudentFollowUp, error) {
-	// Verify assigned user exists and is MEMBER role
+	
 	user, err := s.userRepo.GetByID(ctx, assignedTo)
 	if err != nil {
 		return nil, errors.New("assigned user not found")
@@ -70,20 +70,20 @@ func (s *FollowUpService) CreateFollowUp(ctx context.Context, studentID, assigne
 		return nil, err
 	}
 
-	// Get full follow-up with relations
+	
 	result, err := s.followUpRepo.GetByID(ctx, followUp.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch creator user for notification
+	
 	creator, err := s.userRepo.GetByID(ctx, createdBy)
 	if err != nil {
-		// If we can't fetch creator, use default message
+		
 		creator = &domain.User{Name: "System"}
 	}
 
-	// Send notification to assigned user
+	
 	go s.notifyFollowUpAssigned(ctx, result, creator)
 
 	return result, nil
@@ -95,8 +95,8 @@ func (s *FollowUpService) GetFollowUp(ctx context.Context, id, requestingUserID 
 		return nil, err
 	}
 
-	// Authorization: only assigned member can view details
-	// TODO: HEAD and LEAD can also view (implement role-based access)
+	
+	
 	if followUp.AssignedTo != requestingUserID {
 		return nil, errors.New("unauthorized: you can only view follow-ups assigned to you")
 	}
@@ -140,17 +140,17 @@ func (s *FollowUpService) AddContactLog(ctx context.Context, followUpID, userID 
 		return err
 	}
 
-	// Authorization check
+	
 	if followUp.AssignedTo != userID {
 		return errors.New("unauthorized: only the assigned member can add contact logs")
 	}
 
-	// State validation
+	
 	if followUp.Stage != domain.StageContactPending {
 		return fmt.Errorf("invalid state: cannot add contact log in stage %s", followUp.Stage)
 	}
 
-	// Create contact log
+	
 	contactLog := &domain.ContactLog{
 		FollowUpID:  followUpID,
 		Successful:  successful,
@@ -162,7 +162,7 @@ func (s *FollowUpService) AddContactLog(ctx context.Context, followUpID, userID 
 		return err
 	}
 
-	// If successful, transition to CONTACT_COMPLETED
+	
 	if successful {
 		if err := s.followUpRepo.UpdateStage(ctx, followUpID, domain.StageContactCompleted); err != nil {
 			return err
@@ -178,38 +178,38 @@ func (s *FollowUpService) ScheduleMeeting(ctx context.Context, followUpID, userI
 		return nil, err
 	}
 
-	// Authorization check
+	
 	if followUp.AssignedTo != userID {
 		return nil, errors.New("unauthorized: only the assigned member can schedule meetings")
 	}
 
-	// State validation
+	
 	if followUp.Stage != domain.StageContactCompleted {
 		return nil, errors.New("invalid state: cannot schedule meeting before contact completion")
 	}
 
-	// Parse scheduled time
+	
 	scheduledAt, err := time.Parse(time.RFC3339, scheduledAtStr)
 	if err != nil {
 		return nil, errors.New("invalid scheduled_at format, use RFC3339 (e.g., 2026-02-15T10:00:00Z)")
 	}
 
-	// Validate future time
+	
 	if scheduledAt.Before(time.Now()) {
 		return nil, errors.New("scheduled_at must be in the future")
 	}
 
-	// Validate meeting link
+	
 	if meetingLink == "" {
 		return nil, errors.New("meeting_link is required")
 	}
 
-	// Validate participants
+	
 	if len(participantIDs) < 1 {
 		return nil, errors.New("at least one participant is required")
 	}
 
-	// Create meeting
+	
 	meeting := &domain.Meeting{
 		FollowUpID:  followUpID,
 		ScheduledAt: scheduledAt,
@@ -222,18 +222,18 @@ func (s *FollowUpService) ScheduleMeeting(ctx context.Context, followUpID, userI
 		return nil, err
 	}
 
-	// Add participants
+	
 	if err := s.meetingRepo.AddParticipants(ctx, meeting.ID, participantIDs); err != nil {
 		return nil, err
 	}
 
-	// Update stage to MEETING_SCHEDULED
+	
 	if err := s.followUpRepo.UpdateStage(ctx, followUpID, domain.StageMeetingScheduled); err != nil {
 		return nil, err
 	}
 
-	// TODO: Send notifications to participants (email + socket)
-	// This will be implemented in notification service
+	
+	
 
 	return s.meetingRepo.GetByID(ctx, meeting.ID)
 }
@@ -244,7 +244,7 @@ func (s *FollowUpService) ListMeetings(ctx context.Context, followUpID, userID u
 		return nil, err
 	}
 
-	// Authorization check
+	
 	if followUp.AssignedTo != userID {
 		return nil, errors.New("unauthorized: only the assigned member can view meetings")
 	}
@@ -263,12 +263,12 @@ func (s *FollowUpService) CompleteMeeting(ctx context.Context, meetingID, userID
 		return err
 	}
 
-	// Authorization check
+	
 	if followUp.AssignedTo != userID {
 		return errors.New("unauthorized: only the assigned member can mark meetings as complete")
 	}
 
-	// State validation
+	
 	if followUp.Stage != domain.StageMeetingScheduled {
 		return fmt.Errorf("invalid state: cannot complete meeting in stage %s", followUp.Stage)
 	}
@@ -277,12 +277,12 @@ func (s *FollowUpService) CompleteMeeting(ctx context.Context, meetingID, userID
 		return errors.New("meeting is not in scheduled state")
 	}
 
-	// Update meeting status
+	
 	if err := s.meetingRepo.UpdateStatus(ctx, meetingID, domain.MeetingCompleted); err != nil {
 		return err
 	}
 
-	// Update follow-up stage
+	
 	return s.followUpRepo.UpdateStage(ctx, meeting.FollowUpID, domain.StageMeetingCompleted)
 }
 
@@ -297,17 +297,17 @@ func (s *FollowUpService) SubmitOutcome(ctx context.Context, meetingID, userID u
 		return err
 	}
 
-	// Authorization check
+	
 	if followUp.AssignedTo != userID {
 		return errors.New("unauthorized: only the assigned member can submit outcomes")
 	}
 
-	// State validation
+	
 	if followUp.Stage != domain.StageMeetingCompleted {
 		return errors.New("invalid state: cannot submit outcome before meeting completion")
 	}
 
-	// Validation
+	
 	if status != domain.OutcomeSelected && status != domain.OutcomeRejected {
 		return errors.New("status must be SELECTED or REJECTED")
 	}
@@ -333,7 +333,7 @@ func (s *FollowUpService) SubmitOutcome(ctx context.Context, meetingID, userID u
 		nextFollowUpAt = &parsed
 	}
 
-	// Create outcome
+	
 	outcome := &domain.MeetingOutcome{
 		MeetingID:      meetingID,
 		Status:         status,
@@ -346,14 +346,14 @@ func (s *FollowUpService) SubmitOutcome(ctx context.Context, meetingID, userID u
 		return err
 	}
 
-	// Update follow-up stage based on outcome
+	
 	var newStage domain.FollowUpStage
 	if status == domain.OutcomeSelected {
 		newStage = domain.StageSelected
 	} else {
 		newStage = domain.StageRejected
 
-		// Create reminder for rejected student
+		
 		reminder := &domain.FollowUpReminder{
 			FollowUpID: followUp.ID,
 			RemindAt:   *nextFollowUpAt,
@@ -373,27 +373,27 @@ func (s *FollowUpService) RestartFollowUp(ctx context.Context, followUpID, userI
 		return err
 	}
 
-	// Authorization check
+	
 	if followUp.AssignedTo != userID {
 		return errors.New("unauthorized: only the assigned member can restart follow-ups")
 	}
 
-	// State validation: can only restart REJECTED follow-ups
+	
 	if followUp.Stage != domain.StageRejected {
 		return errors.New("can only restart rejected follow-ups")
 	}
 
-	// Reset stage to CONTACT_PENDING
+	
 	return s.followUpRepo.UpdateStage(ctx, followUpID, domain.StageContactPending)
 }
 
-// notifyFollowUpAssigned sends a real-time notification to the assigned user
+
 func (s *FollowUpService) notifyFollowUpAssigned(ctx context.Context, followUp *domain.StudentFollowUp, creator *domain.User) {
 	if s.hub == nil {
-		return // Hub not initialized (e.g., in tests)
+		return 
 	}
 
-	// Build notification
+	
 	notification := &domain.Notification{
 		ID:      uuid.New().String(),
 		Type:    domain.NotificationFollowUpAssigned,
@@ -407,7 +407,7 @@ func (s *FollowUpService) notifyFollowUpAssigned(ctx context.Context, followUp *
 		CreatedAt: time.Now(),
 	}
 
-	// Broadcast to assigned user
+	
 	fmt.Printf("[FollowUpService] Notification generated for user %d: %+v\n", followUp.AssignedTo, notification)
 	s.hub.BroadcastToUser(followUp.AssignedTo, notification)
 }

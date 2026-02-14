@@ -15,7 +15,7 @@ func (s FollowUpStage) String() string {
 	return string(s)
 }
 
-// IsValid checks if the stage is a valid FollowUpStage
+
 func (s FollowUpStage) IsValid() bool {
 	switch s {
 	case StageContactPending, StageContactCompleted, StageMeetingScheduled,

@@ -22,11 +22,11 @@ func NewScheduler(reminderService port.ReminderService, logger *slog.Logger) *Sc
 	}
 }
 
-// Start begins the scheduler with a 5-minute interval for processing reminders
+
 func (s *Scheduler) Start() {
 	ticker := time.NewTicker(5 * time.Minute)
 
-	// Run once immediately on startup
+	
 	go s.processReminders()
 
 	go func() {
@@ -45,7 +45,7 @@ func (s *Scheduler) Start() {
 	s.logger.Info("Scheduler started", "interval", "5 minutes")
 }
 
-// Stop gracefully stops the scheduler
+
 func (s *Scheduler) Stop() {
 	close(s.stopChan)
 }
