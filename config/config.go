@@ -1,9 +1,10 @@
 package config
 
 import (
-	"github.com/spf13/viper"
 	"log"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 type Config struct {
@@ -24,10 +25,16 @@ type Config struct {
 	RedisPassword string `mapstructure:"REDIS_PASSWORD"`
 	RedisDB       int    `mapstructure:"REDIS_DB"`
 
-	AdminSecretKey    string        `mapstructure:"ADMIN_SECRET_KEY"`
-	JWTSecret         string        `mapstructure:"JWT_SECRET"`
-	AccessTokenExpiry time.Duration `mapstructure:"ACCESS_TOKEN_EXPIRY"`
+	AdminSecretKey     string        `mapstructure:"ADMIN_SECRET_KEY"`
+	JWTSecret          string        `mapstructure:"JWT_SECRET"`
+	AccessTokenExpiry  time.Duration `mapstructure:"ACCESS_TOKEN_EXPIRY"`
 	RefreshTokenExpiry time.Duration `mapstructure:"REFRESH_TOKEN_EXPIRY"`
+
+	ToolAPIBaseURL       string `mapstructure:"TOOL_API_BASE_URL"`
+	ToolAPIMobile        string `mapstructure:"TOOL_API_MOBILE"`
+	ToolAPIPassword      string `mapstructure:"TOOL_API_PASSWORD"`
+	ToolAPITransactionID string `mapstructure:"TOOL_API_TRANSACTION_ID"`
+	ToolAPIToken         string `mapstructure:"TOOL_API_TOKEN"`
 }
 
 func LoadConfig() *Config {
@@ -51,6 +58,11 @@ func LoadConfig() *Config {
 	viper.BindEnv("JWT_SECRET")
 	viper.BindEnv("ACCESS_TOKEN_EXPIRY")
 	viper.BindEnv("REFRESH_TOKEN_EXPIRY")
+	viper.BindEnv("TOOL_API_BASE_URL")
+	viper.BindEnv("TOOL_API_MOBILE")
+	viper.BindEnv("TOOL_API_PASSWORD")
+	viper.BindEnv("TOOL_API_TRANSACTION_ID")
+	viper.BindEnv("TOOL_API_TOKEN")
 
 	viper.SetDefault("ENVIRONMENT", "dev")
 	viper.SetDefault("PORT", "8080")
@@ -73,17 +85,51 @@ func LoadConfig() *Config {
 		log.Printf("Viper unmarshal error: %v, falling back to manual mapping", err)
 	}
 
-	if val := viper.GetString("DB_HOST"); val != "" { config.DBHost = val }
-	if val := viper.GetString("DB_USER"); val != "" { config.DBUser = val }
-	if val := viper.GetString("DB_PASSWORD"); val != "" { config.DBPassword = val }
-	if val := viper.GetString("DB_NAME"); val != "" { config.DBName = val }
-	if val := viper.GetString("DB_PORT"); val != "" { config.DBPort = val }
-	
-	if val := viper.GetString("REDIS_HOST"); val != "" { config.RedisHost = val }
-	if val := viper.GetString("REDIS_PORT"); val != "" { config.RedisPort = val }
-	
-	if val := viper.GetString("JWT_SECRET"); val != "" { config.JWTSecret = val }
-	if val := viper.GetString("ADMIN_SECRET_KEY"); val != "" { config.AdminSecretKey = val }
+	if val := viper.GetString("DB_HOST"); val != "" {
+		config.DBHost = val
+	}
+	if val := viper.GetString("DB_USER"); val != "" {
+		config.DBUser = val
+	}
+	if val := viper.GetString("DB_PASSWORD"); val != "" {
+		config.DBPassword = val
+	}
+	if val := viper.GetString("DB_NAME"); val != "" {
+		config.DBName = val
+	}
+	if val := viper.GetString("DB_PORT"); val != "" {
+		config.DBPort = val
+	}
+
+	if val := viper.GetString("REDIS_HOST"); val != "" {
+		config.RedisHost = val
+	}
+	if val := viper.GetString("REDIS_PORT"); val != "" {
+		config.RedisPort = val
+	}
+
+	if val := viper.GetString("JWT_SECRET"); val != "" {
+		config.JWTSecret = val
+	}
+	if val := viper.GetString("ADMIN_SECRET_KEY"); val != "" {
+		config.AdminSecretKey = val
+	}
+
+	if val := viper.GetString("TOOL_API_BASE_URL"); val != "" {
+		config.ToolAPIBaseURL = val
+	}
+	if val := viper.GetString("TOOL_API_MOBILE"); val != "" {
+		config.ToolAPIMobile = val
+	}
+	if val := viper.GetString("TOOL_API_PASSWORD"); val != "" {
+		config.ToolAPIPassword = val
+	}
+	if val := viper.GetString("TOOL_API_TRANSACTION_ID"); val != "" {
+		config.ToolAPITransactionID = val
+	}
+	if val := viper.GetString("TOOL_API_TOKEN"); val != "" {
+		config.ToolAPIToken = val
+	}
 
 	return &config
 }
