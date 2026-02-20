@@ -23,7 +23,7 @@ type Meeting struct {
 	ScheduledAt time.Time       `json:"scheduled_at" gorm:"not null;index"`
 	MeetingLink string          `json:"meeting_link" gorm:"not null"`
 	Status      MeetingStatus   `json:"status" gorm:"type:varchar(20);default:'SCHEDULED'"`
-	CreatedBy   uint            `json:"created_by" gorm:"not null"`
+	CreatedBy   string          `json:"created_by" gorm:"type:varchar(36);not null"`
 	Creator     User            `json:"creator" gorm:"foreignKey:CreatedBy"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`

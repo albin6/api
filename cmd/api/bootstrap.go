@@ -12,8 +12,8 @@ import (
 	"github.com/albin6/api/config"
 	"github.com/albin6/api/internal/adapters/api/middleware"
 	"github.com/albin6/api/internal/adapters/handler"
+	redis_adapter "github.com/albin6/api/internal/adapters/redis"
 	"github.com/albin6/api/internal/adapters/repo"
-	"github.com/albin6/api/internal/adapters/storage"
 	"github.com/albin6/api/internal/adapters/websocket"
 	"github.com/albin6/api/internal/core/domain"
 	"github.com/albin6/api/internal/core/service"
@@ -38,10 +38,7 @@ func NewServer(cfg *config.Config) *Server {
 	db := database.NewPostgresDB(cfg)
 	rdb := database.NewRedisClient(cfg)
 
-	userRepo := repo.NewPostgresUserRepo(db)
-	adminRepo := repo.NewPostgresAdminRepo(db)
-	studentRepo := repo.NewPostgresStudentRepo(db)
-	tokenRepo := storage.NewRedisTokenRepo(rdb)
+	// User, Admin, Student Repos removed
 	followUpRepo := repo.NewPostgresFollowUpRepo(db)
 	contactLogRepo := repo.NewPostgresContactLogRepo(db)
 	meetingRepo := repo.NewPostgresMeetingRepo(db)
@@ -51,27 +48,21 @@ func NewServer(cfg *config.Config) *Server {
 	hub := websocket.NewHub()
 	go hub.Run()
 
-	authService := service.NewAuthService(userRepo, tokenRepo, cfg)
-	adminService := service.NewAdminService(adminRepo)
-	studentService := service.NewStudentService(studentRepo)
-	followUpService := service.NewFollowUpService(followUpRepo, contactLogRepo, meetingRepo, meetingOutcomeRepo, reminderRepo, studentRepo, userRepo, hub)
+	// Auth, Admin, Student Services removed
+	followUpService := service.NewFollowUpService(followUpRepo, contactLogRepo, meetingRepo, meetingOutcomeRepo, reminderRepo, hub)
 	reminderService := service.NewReminderService(reminderRepo)
 
 	toolClient := toolapi.NewClient(cfg)
 	toolService := service.NewToolService(toolClient, rdb)
 
-	authHandler := handler.NewAuthHandler(authService)
-	adminHandler := handler.NewAdminHandler(adminService)
-	studentHandler := handler.NewStudentHandler(studentService)
+	// Auth, Admin, Student Handlers removed
 	healthHandler := handler.NewHealthHandler(db, rdb)
 	followUpHandler := handler.NewFollowUpHandler(followUpService)
 	reminderHandler := handler.NewReminderHandler(reminderService)
 	toolHandler := handler.NewToolHandler(toolService)
 
 	db.AutoMigrate(
-		&domain.User{},
-		&domain.Admin{},
-		&domain.Student{},
+		// User, Admin, Student removed
 		&domain.StudentFollowUp{},
 		&domain.ContactLog{},
 		&domain.Meeting{},
@@ -92,27 +83,13 @@ func NewServer(cfg *config.Config) *Server {
 
 	r.GET("/ws", websocket.ServeWs(hub, cfg))
 
-	authGroup := r.Group("/auth")
-	{
-		authGroup.POST("/signup", authHandler.Signup)
-		authGroup.POST("/login", authHandler.Login)
-		authGroup.POST("/refresh", authHandler.Refresh)
-		authGroup.POST("/logout", authHandler.Logout)
-	}
-
-	adminGroup := r.Group("/admin")
-	adminGroup.Use(middleware.AdminKeyMiddleware(cfg))
-	{
-		adminGroup.POST("/create", adminHandler.CreateAdmin)
-	}
+	// Auth routes removed
+	// Admin routes removed
 
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware(cfg))
 	{
-
-		protected.POST("/students", studentHandler.CreateStudent)
-		protected.GET("/students", studentHandler.GetStudents)
-		protected.GET("/students/search", studentHandler.SearchStudents)
+		// Student routes removed
 
 		protected.POST("/followups", followUpHandler.CreateFollowUp)
 		protected.GET("/followups/:id", followUpHandler.GetFollowUp)
@@ -129,13 +106,7 @@ func NewServer(cfg *config.Config) *Server {
 
 		protected.GET("/reminders/upcoming", reminderHandler.GetUpcomingReminders)
 
-		protected.GET("/users/search", authHandler.SearchUsers)
-
-		protected.GET("/profile", func(c *gin.Context) {
-			userID, _ := c.Get("userID")
-			role, _ := c.Get("role")
-			c.JSON(200, gin.H{"message": "Access granted", "userID": userID, "role": role})
-		})
+		// User search/profile routes removed
 	}
 
 	toolGroup := r.Group("/api/tool")
@@ -152,6 +123,10 @@ func NewServer(cfg *config.Config) *Server {
 
 	sched := scheduler.NewScheduler(reminderService, log)
 	sched.Start()
+
+	// Initialize User Sync Subscriber
+	userSubscriber := redis_adapter.NewUserSubscriber(rdb, db)
+	go userSubscriber.SubscribeToUserUpdates()
 
 	return &Server{
 		Router:    r,

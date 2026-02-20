@@ -3,7 +3,6 @@ package websocket
 import (
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/albin6/api/config"
 	"github.com/albin6/api/internal/core/domain"
@@ -32,18 +31,13 @@ func ServeWs(hub *Hub, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		
 		claims, err := utils.ValidateToken(token, cfg)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			return
 		}
 
-		userID, err := strconv.ParseUint(claims.Sub, 10, 32)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user ID"})
-			return
-		}
+		userID := claims.Sub
 
 		
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -56,18 +50,13 @@ func ServeWs(hub *Hub, cfg *config.Config) gin.HandlerFunc {
 		client := &Client{
 			hub:    hub,
 			conn:   conn,
-			userID: uint(userID),
+			userID: userID,
 			send:   make(chan *domain.Notification, 256),
 		}
 
-		
-		client.hub.register <- client
+		hub.register <- client
 
-		
 		go client.writePump()
 		go client.readPump()
 	}
 }
-
-
-

@@ -1,6 +1,10 @@
 package toolapi
 
-import "time"
+import (
+	"encoding/json"
+	"strconv"
+	"time"
+)
 
 // AuthRequest represents the request body for verifySignIn
 type AuthRequest struct {
@@ -63,13 +67,13 @@ type StudentDTO struct {
 // StudentListResponse represents the full response from external API
 type StudentListResponse struct {
 	Data       []Student `json:"data"`
-	TotalCount string    `json:"totalCount"`
+	TotalCount FlexInt   `json:"totalCount"`
 }
 
 // StudentListDTOResponse represents the lean response for the frontend
 type StudentListDTOResponse struct {
 	Data       []StudentDTO `json:"data"`
-	TotalCount string       `json:"totalCount"`
+	TotalCount int          `json:"totalCount"`
 }
 
 // FilterOption represents a generic filter option
@@ -146,4 +150,27 @@ type AvailableFilter string
 type PageFiltersResponse struct {
 	Data       []AvailableFilter `json:"data"`
 	TotalCount int               `json:"totalCount"`
+}
+
+// FlexInt handles JSON fields that can be either int or string
+type FlexInt int
+
+func (fi *FlexInt) UnmarshalJSON(data []byte) error {
+	var i int
+	if err := json.Unmarshal(data, &i); err == nil {
+		*fi = FlexInt(i)
+		return nil
+	}
+
+	var s string
+	if err := json.Unmarshal(data, &s); err == nil {
+		val, err := strconv.Atoi(s)
+		if err != nil {
+			return err
+		}
+		*fi = FlexInt(val)
+		return nil
+	}
+
+	return nil
 }

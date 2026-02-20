@@ -9,7 +9,7 @@ import (
 
 type Hub struct {
 	
-	clients map[uint]*Client
+	clients map[string]*Client
 
 	
 	broadcast chan *NotificationMessage
@@ -25,13 +25,13 @@ type Hub struct {
 }
 
 type NotificationMessage struct {
-	UserID       uint
+	UserID       string
 	Notification *domain.Notification
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		clients:    make(map[uint]*Client),
+		clients:    make(map[string]*Client),
 		broadcast:  make(chan *NotificationMessage, 256),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
@@ -63,20 +63,20 @@ func (h *Hub) Run() {
 		case message := <-h.broadcast:
 			h.mu.RLock()
 			client, exists := h.clients[message.UserID]
-			fmt.Printf("[Hub] Processing broadcast for user %d. Client exists: %v\n", message.UserID, exists)
+			fmt.Printf("[Hub] Processing broadcast for user %s. Client exists: %v\n", message.UserID, exists)
 			if exists {
 				select {
 				case client.send <- message.Notification:
-					fmt.Printf("[Hub] Notification sent to client channel for user %d\n", message.UserID)
+					fmt.Printf("[Hub] Notification sent to client channel for user %s\n", message.UserID)
 				default:
-					fmt.Printf("[Hub] Client channel full for user %d, disconnecting\n", message.UserID)
+					fmt.Printf("[Hub] Client channel full for user %s, disconnecting\n", message.UserID)
 					
 					h.mu.RUnlock()
 					h.unregister <- client
 					h.mu.RLock()
 				}
 			} else {
-				fmt.Printf("[Hub] No active client found for user %d. Current clients: %d\n", message.UserID, len(h.clients))
+				fmt.Printf("[Hub] No active client found for user %s. Current clients: %d\n", message.UserID, len(h.clients))
 			}
 			h.mu.RUnlock()
 		}
@@ -84,8 +84,8 @@ func (h *Hub) Run() {
 }
 
 
-func (h *Hub) BroadcastToUser(userID uint, notification *domain.Notification) {
-	fmt.Printf("[Hub] Broadcasting to user %d\n", userID)
+func (h *Hub) BroadcastToUser(userID string, notification *domain.Notification) {
+	fmt.Printf("[Hub] Broadcasting to user %s\n", userID)
 	h.broadcast <- &NotificationMessage{
 		UserID:       userID,
 		Notification: notification,

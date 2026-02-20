@@ -42,7 +42,7 @@ func (r *PostgresReminderRepo) MarkAsSent(ctx context.Context, id uint) error {
 		}).Error
 }
 
-func (r *PostgresReminderRepo) GetUpcomingByUserID(ctx context.Context, userID uint) ([]domain.FollowUpReminder, error) {
+func (r *PostgresReminderRepo) GetUpcomingByUserID(ctx context.Context, userID string) ([]domain.FollowUpReminder, error) {
 	var reminders []domain.FollowUpReminder
 	err := r.db.WithContext(ctx).
 		Joins("JOIN student_follow_ups ON student_follow_ups.id = follow_up_reminders.follow_up_id").

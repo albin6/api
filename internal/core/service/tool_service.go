@@ -27,6 +27,17 @@ func NewToolService(client *toolapi.Client, rdb *redis.Client) port.ToolService 
 }
 
 func (s *ToolService) GetStudents(ctx context.Context, params map[string]string) (*toolapi.StudentListDTOResponse, error) {
+	// Map status to statusCodes if present (external API expects statusCodes)
+	if val, ok := params["status"]; ok {
+		params["statusCodes"] = val
+		delete(params, "status")
+	}
+
+	// Default to statusCodes=2 (Ongoing) if not provided
+	if _, ok := params["statusCodes"]; !ok {
+		params["statusCodes"] = "2"
+	}
+
 	// Generate cache key based on params
 	cacheKey := "tool:students:dto:" + generateCacheKey(params)
 
@@ -66,7 +77,7 @@ func (s *ToolService) GetStudents(ctx context.Context, params map[string]string)
 
 	resp := &toolapi.StudentListDTOResponse{
 		Data:       dtos,
-		TotalCount: fullResp.TotalCount,
+		TotalCount: int(fullResp.TotalCount),
 	}
 
 	// Cache result (1 minute)
