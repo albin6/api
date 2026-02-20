@@ -20,8 +20,8 @@ func NewFollowUpHandler(service port.FollowUpService) *FollowUpHandler {
 
 func (h *FollowUpHandler) CreateFollowUp(c *gin.Context) {
 	var req struct {
-		StudentID  uint `json:"student_id" binding:"required"`
-		AssignedTo uint `json:"assigned_to" binding:"required"`
+		StudentID  uint   `json:"student_id" binding:"required"`
+		AssignedTo string `json:"assigned_to" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -98,13 +98,9 @@ func (h *FollowUpHandler) ListFollowUps(c *gin.Context) {
 		}
 	}
 
-	var assignedTo *uint
+	var assignedTo *string
 	if assignedToStr != "" {
-		val, err := strconv.ParseUint(assignedToStr, 10, 32)
-		if err == nil {
-			u := uint(val)
-			assignedTo = &u
-		}
+		assignedTo = &assignedToStr
 	}
 
 	result, err := h.service.ListFollowUps(c.Request.Context(), stage, assignedTo, page, limit)
@@ -220,9 +216,9 @@ func (h *FollowUpHandler) ScheduleMeeting(c *gin.Context) {
 	}
 
 	var req struct {
-		ScheduledAt    string `json:"scheduled_at" binding:"required"`
-		MeetingLink    string `json:"meeting_link" binding:"required"`
-		ParticipantIDs []uint `json:"participant_ids" binding:"required"`
+		ScheduledAt    string   `json:"scheduled_at" binding:"required"`
+		MeetingLink    string   `json:"meeting_link" binding:"required"`
+		ParticipantIDs []string `json:"participant_ids" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -406,18 +402,22 @@ func (h *FollowUpHandler) RestartFollowUp(c *gin.Context) {
 }
 
 
-func getUserIDFromContext(c *gin.Context) uint {
+
+
+
+
+
+
+func getUserIDFromContext(c *gin.Context) string {
 	userIDStr, exists := c.Get("userID")
 	if !exists {
-		return 0
+		return ""
 	}
 
-	
-	userIDString, ok := userIDStr.(string)
+	userID, ok := userIDStr.(string)
 	if !ok {
-		return 0
+		return ""
 	}
 
-	userID, _ := strconv.ParseUint(userIDString, 10, 32)
-	return uint(userID)
+	return userID
 }

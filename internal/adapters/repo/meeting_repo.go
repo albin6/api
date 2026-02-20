@@ -49,7 +49,7 @@ func (r *PostgresMeetingRepo) UpdateStatus(ctx context.Context, id uint, status 
 		Update("status", status).Error
 }
 
-func (r *PostgresMeetingRepo) AddParticipants(ctx context.Context, meetingID uint, userIDs []uint) error {
+func (r *PostgresMeetingRepo) AddParticipants(ctx context.Context, meetingID uint, userIDs []string) error {
 	participants := make([]domain.MeetingParticipant, len(userIDs))
 	for i, userID := range userIDs {
 		participants[i] = domain.MeetingParticipant{

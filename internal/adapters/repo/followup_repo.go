@@ -31,7 +31,7 @@ func (r *PostgresFollowUpRepo) GetByID(ctx context.Context, id uint) (*domain.St
 	return &followUp, nil
 }
 
-func (r *PostgresFollowUpRepo) GetAll(ctx context.Context, stage *domain.FollowUpStage, assignedTo *uint, page, limit int) ([]domain.StudentFollowUp, int64, error) {
+func (r *PostgresFollowUpRepo) GetAll(ctx context.Context, stage *domain.FollowUpStage, assignedTo *string, page, limit int) ([]domain.StudentFollowUp, int64, error) {
 	var followUps []domain.StudentFollowUp
 	var total int64
 
@@ -41,7 +41,7 @@ func (r *PostgresFollowUpRepo) GetAll(ctx context.Context, stage *domain.FollowU
 		query = query.Where("stage = ?", *stage)
 	}
 	if assignedTo != nil {
-		query = query.Where("assigned_to = ?", *assignedTo)
+		query = query.Where("assigned_to = ?", *assignedTo) // assignedTo is now string, DB column should be varchar
 	}
 
 	if err := query.Count(&total).Error; err != nil {

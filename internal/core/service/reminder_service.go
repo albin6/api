@@ -18,7 +18,7 @@ func NewReminderService(reminderRepo port.ReminderRepository) *ReminderService {
 	}
 }
 
-func (s *ReminderService) GetUpcomingReminders(ctx context.Context, userID uint) ([]domain.FollowUpReminder, error) {
+func (s *ReminderService) GetUpcomingReminders(ctx context.Context, userID string) ([]domain.FollowUpReminder, error) {
 	return s.reminderRepo.GetUpcomingByUserID(ctx, userID)
 }
 

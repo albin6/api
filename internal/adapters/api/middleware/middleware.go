@@ -26,6 +26,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		// Claims.Sub is the UserID (UUID string)
 		c.Set("userID", claims.Sub)
 		c.Set("role", claims.Role)
 		c.Next()

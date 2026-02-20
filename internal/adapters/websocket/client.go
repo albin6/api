@@ -30,7 +30,7 @@ type Client struct {
 	conn *websocket.Conn
 
 	
-	userID uint
+	userID string
 
 	
 	send chan *domain.Notification

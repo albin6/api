@@ -38,6 +38,12 @@ type Config struct {
 }
 
 func LoadConfig() *Config {
+	// Setup viper to read from .env if it exists
+	viper.SetConfigFile(".env")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Printf("Warning: Failed to read .env file: %v", err)
+	}
+	
 	viper.AutomaticEnv()
 
 	viper.BindEnv("ENVIRONMENT")
