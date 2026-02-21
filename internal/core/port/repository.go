@@ -12,7 +12,7 @@ type FollowUpRepository interface {
 	GetByID(ctx context.Context, id uint) (*domain.StudentFollowUp, error)
 	GetAll(ctx context.Context, stage *domain.FollowUpStage, assignedTo *string, page, limit int) ([]domain.StudentFollowUp, int64, error)
 	UpdateStage(ctx context.Context, id uint, stage domain.FollowUpStage) error
-	GetByStudentID(ctx context.Context, studentID uint) ([]domain.StudentFollowUp, error)
+	GetByStudentID(ctx context.Context, studentID string) ([]domain.StudentFollowUp, error)
 }
 
 type ContactLogRepository interface {

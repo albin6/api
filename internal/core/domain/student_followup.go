@@ -5,8 +5,8 @@ import (
 )
 
 type StudentFollowUp struct {
-	ID        uint `json:"id" gorm:"primaryKey"`
-	StudentID uint `json:"student_id" gorm:"not null;index"`
+	ID        uint   `json:"id" gorm:"primaryKey"`
+	StudentID string `json:"student_id" gorm:"type:varchar(36);not null;index"`
 	// Student      Student       `json:"student" gorm:"-"` // Removed local relation
 	AssignedTo string `json:"assigned_to" gorm:"type:varchar(36);not null;index"`
 	// AssignedUser User          `json:"assigned_user" gorm:"-"` // Removed local relation

@@ -25,8 +25,6 @@ func (r *PostgresReminderRepo) GetPendingReminders(ctx context.Context, before t
 	err := r.db.WithContext(ctx).
 		Where("remind_at <= ? AND sent = ?", before, false).
 		Preload("FollowUp").
-		Preload("FollowUp.Student").
-		Preload("FollowUp.AssignedUser").
 		Find(&reminders).Error
 	return reminders, err
 }
@@ -48,7 +46,6 @@ func (r *PostgresReminderRepo) GetUpcomingByUserID(ctx context.Context, userID s
 		Joins("JOIN student_follow_ups ON student_follow_ups.id = follow_up_reminders.follow_up_id").
 		Where("student_follow_ups.assigned_to = ? AND follow_up_reminders.sent = ?", userID, false).
 		Preload("FollowUp").
-		Preload("FollowUp.Student").
 		Order("follow_up_reminders.remind_at ASC").
 		Find(&reminders).Error
 	return reminders, err

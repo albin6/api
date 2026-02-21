@@ -7,7 +7,7 @@ import (
 )
 
 type FollowUpService interface {
-	CreateFollowUp(ctx context.Context, studentID uint, assignedTo, createdBy string) (*domain.StudentFollowUp, error)
+	CreateFollowUp(ctx context.Context, studentID string, assignedTo, createdBy string) (*domain.StudentFollowUp, error)
 	GetFollowUp(ctx context.Context, id uint, requestingUserID string) (*domain.StudentFollowUp, error)
 	ListFollowUps(ctx context.Context, stage *domain.FollowUpStage, assignedTo *string, page, limit int) (map[string]interface{}, error)
 	AddContactLog(ctx context.Context, followUpID uint, userID string, successful bool, notes string) error
