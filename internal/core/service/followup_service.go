@@ -42,7 +42,7 @@ func NewFollowUpService(
 	}
 }
 
-func (s *FollowUpService) CreateFollowUp(ctx context.Context, studentID uint, assignedTo, createdBy string) (*domain.StudentFollowUp, error) {
+func (s *FollowUpService) CreateFollowUp(ctx context.Context, studentID string, assignedTo, createdBy string) (*domain.StudentFollowUp, error) {
 	// User role validation transferred to Gateway/Auth service
 
 	followUp := &domain.StudentFollowUp{

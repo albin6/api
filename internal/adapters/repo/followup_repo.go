@@ -22,8 +22,6 @@ func (r *PostgresFollowUpRepo) Create(ctx context.Context, followUp *domain.Stud
 func (r *PostgresFollowUpRepo) GetByID(ctx context.Context, id uint) (*domain.StudentFollowUp, error) {
 	var followUp domain.StudentFollowUp
 	err := r.db.WithContext(ctx).
-		Preload("Student").
-		Preload("AssignedUser").
 		First(&followUp, id).Error
 	if err != nil {
 		return nil, err
@@ -50,8 +48,6 @@ func (r *PostgresFollowUpRepo) GetAll(ctx context.Context, stage *domain.FollowU
 
 	offset := (page - 1) * limit
 	err := query.
-		Preload("Student").
-		Preload("AssignedUser").
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
@@ -67,11 +63,10 @@ func (r *PostgresFollowUpRepo) UpdateStage(ctx context.Context, id uint, stage d
 		Update("stage", stage).Error
 }
 
-func (r *PostgresFollowUpRepo) GetByStudentID(ctx context.Context, studentID uint) ([]domain.StudentFollowUp, error) {
+func (r *PostgresFollowUpRepo) GetByStudentID(ctx context.Context, studentID string) ([]domain.StudentFollowUp, error) {
 	var followUps []domain.StudentFollowUp
 	err := r.db.WithContext(ctx).
 		Where("student_id = ?", studentID).
-		Preload("AssignedUser").
 		Order("created_at DESC").
 		Find(&followUps).Error
 	return followUps, err
